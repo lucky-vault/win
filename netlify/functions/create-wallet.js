@@ -1,43 +1,61 @@
 const admin = require("firebase-admin");
 
+const headers = {
+  "Content-Type": "application/json",
+  "Cache-Control": "no-store"
+};
+
+// Initialize Firebase Admin securely.
 if (!admin.apps.length) {
+  const serviceAccountJson =
+    process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+
+  if (!serviceAccountJson) {
+    throw new Error("Firebase credentials are not configured.");
+  }
+
+  const serviceAccount = JSON.parse(serviceAccountJson);
+
   admin.initializeApp({
-    credential: admin.credential.applicationDefault()
+    credential: admin.credential.cert(serviceAccount)
   });
 }
 
 const db = admin.firestore();
 
 exports.handler = async (event) => {
-  const headers = {
-    "Content-Type": "application/json",
-    "Cache-Control": "no-store"
-  };
-
   if (event.httpMethod !== "POST") {
     return {
       statusCode: 405,
       headers,
-      body: JSON.stringify({ error: "Method not allowed" })
+      body: JSON.stringify({
+        error: "Method not allowed"
+      })
     };
   }
 
   try {
-    const token = event.headers.authorization || "";
+    const authorization =
+      event.headers.authorization ||
+      event.headers.Authorization ||
+      "";
 
-    if (!token.startsWith("Bearer ")) {
+    if (!authorization.startsWith("Bearer ")) {
       return {
         statusCode: 401,
         headers,
-        body: JSON.stringify({ error: "Authentication required" })
+        body: JSON.stringify({
+          error: "Authentication required"
+        })
       };
     }
 
-    const decoded = await admin.auth().verifyIdToken(
-      token.substring(7)
-    );
+    const idToken = authorization.substring(7);
+
+    const decoded = await admin.auth().verifyIdToken(idToken);
 
     const uid = decoded.uid;
+
     const walletRef = db.collection("wallets").doc(uid);
 
     const result = await db.runTransaction(async (transaction) => {
@@ -51,18 +69,19 @@ exports.handler = async (event) => {
       }
 
       const wallet = {
-        uid,
+        uid: uid,
         balanceMinor: 0,
         currency: "NGN",
         environment: "sandbox",
-        createdAt: admin.firestore.FieldValue.serverTimestamp()
+        createdAt:
+          admin.firestore.FieldValue.serverTimestamp()
       };
 
       transaction.create(walletRef, wallet);
 
       return {
         created: true,
-        wallet
+        wallet: wallet
       };
     });
 
@@ -82,10 +101,10 @@ exports.handler = async (event) => {
     };
 
   } catch (error) {
-    console.error("Wallet creation error:", error);
+    console.error("Wallet function error:", error);
 
     return {
-      statusCode: 401,
+      statusCode: 500,
       headers,
       body: JSON.stringify({
         error: "Unable to create wallet"
@@ -93,4 +112,3 @@ exports.handler = async (event) => {
     };
   }
 };
-
