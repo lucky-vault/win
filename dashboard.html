@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lucky Vault | Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css">
+
+  <style>
+    .dashboard-wrap {
+      width: min(92%, 1000px);
+      margin: 50px auto;
+    }
+
+    .account-card {
+      padding: 28px;
+      border: 1px solid rgba(212,175,55,.35);
+      border-radius: 18px;
+      background: #151515;
+      margin: 24px 0;
+    }
+
+    .account-card h2 { color: #d4af37; }
+    .account-detail { margin: 14px 0; overflow-wrap: anywhere; }
+
+    .dashboard-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 24px;
+    }
+
+    .dashboard-actions a,
+    .dashboard-actions button {
+      padding: 13px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      cursor: pointer;
+      border: 1px solid #d4af37;
+      background: #d4af37;
+      color: #111;
+      font-weight: bold;
+    }
+
+    #logout-button {
+      background: transparent;
+      color: #d4af37;
+    }
+
+    #dashboard-message { margin-top: 16px; }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <nav class="navbar">
+      <a href="index.html" class="logo">LUCKY VAULT</a>
+
+      <div class="nav-links">
+        <a href="index.html">Home</a>
+        <a href="game.html">Game</a>
+        <a href="support.html">Support</a>
+      </div>
+    </nav>
+  </header>
+
+  <main class="dashboard-wrap">
+    <h1>My Dashboard</h1>
+    <p>Welcome to your Lucky Vault account.</p>
+
+    <section class="account-card">
+      <h2>Account Information</h2>
+
+      <p class="account-detail">
+        <strong>Name:</strong>
+        <span id="user-name">Loading...</span>
+      </p>
+
+      <p class="account-detail">
+        <strong>Email:</strong>
+        <span id="user-email">Loading...</span>
+      </p>
+
+      <p class="account-detail">
+        <strong>Email verification:</strong>
+        <span id="verification-status">Checking...</span>
+      </p>
+
+      <p class="account-detail">
+        <strong>Account status:</strong>
+        <span id="account-status">Checking...</span>
+      </p>
+
+      <div class="dashboard-actions">
+        <a href="game.html">Open Game</a>
+        <a href="support.html">Contact Support</a>
+        <button id="logout-button" type="button">Log Out</button>
+      </div>
+
+      <p id="dashboard-message" role="status" aria-live="polite"></p>
+    </section>
+
+    <section class="account-card">
+      <h2>Gaming Status</h2>
+      <p>Lucky Vault account access is connected.</p>
+      <p>Real-money gaming and financial transactions are not activated.</p>
+      <p>Never send money to an account claiming to be your Lucky Vault wallet.</p>
+    </section>
+  </main>
+
+  <script type="module">
+    import { auth, db } from "./js/firebase.js";
+
+    import {
+      onAuthStateChanged,
+      signOut
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+
+    import {
+      doc,
+      onSnapshot
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+    const ADMIN_UID = "X0enjFRIHuSkl9zntiZ9Z4jtyTn1";
+
+    const userName = document.getElementById("user-name");
+    const userEmail = document.getElementById("user-email");
+    const verificationStatus = document.getElementById("verification-status");
+    const accountStatus = document.getElementById("account-status");
+    const message = document.getElementById("dashboard-message");
+    const logoutButton = document.getElementById("logout-button");
+
+    let unsubscribeAccount = null;
+    let checkingAccount = false;
+    let redirecting = false;
+
+    async function forceLogout(reason) {
+      if (redirecting) return;
+
+      redirecting = true;
+      message.textContent = reason;
+
+      if (unsubscribeAccount) {
+        unsubscribeAccount();
+        unsubscribeAccount = null;
+      }
+
+      try {
+        await signOut(auth);
+      } catch (error) {
+        console.error("Sign-out error:", error);
+      }
+
+      window.location.replace("login.html");
+    }
+
+    onAuthStateChanged(auth, async (user) => {
+      if (unsubscribeAccount) {
+        unsubscribeAccount();
+        unsubscribeAccount = null;
+      }
+
+      if (!user) {
+        window.location.replace("login.html");
+        return;
+      }
+
+      if (user.uid === ADMIN_UID) {
+        window.location.replace("admin.html");
+        return;
+      }
+
+      if (!user.emailVerified) {
+        await forceLogout(
+          "Please verify your email before accessing your dashboard."
+        );
+        return;
+      }
+
+      if (checkingAccount) return;
+      checkingAccount = true;
+
+      userName.textContent = user.displayName || "Lucky Vault Member";
+      userEmail.textContent = user.email || "No email available";
+      verificationStatus.textContent = "Verified";
+      accountStatus.textContent = "Checking...";
+
+      const userRef = doc(db, "users", user.uid);
+
+      unsubscribeAccount = onSnapshot(
+        userRef,
+
+        async (snapshot) => {
+          if (!snapshot.exists()) {
+            await forceLogout(
+              "Your account record could not be found. Please contact support."
+            );
+            return;
+          }
+
+          const data = snapshot.data();
+
+          if (data.role !== "user") {
+            await forceLogout(
+              "Your account does not have player access."
+            );
+            return;
+          }
+
+          if (data.status === "suspended") {
+            accountStatus.textContent = "Suspended";
+
+            await forceLogout(
+              "Your account has been suspended. Please contact support."
+            );
+            return;
+          }
+
+          accountStatus.textContent = "Active";
+          message.textContent = "Your account is active.";
+        },
+
+        async (error) => {
+          console.error("Account status error:", error);
+
+          await forceLogout(
+            "Unable to verify your account status. Please try again later."
+          );
+        }
+      );
+
+      checkingAccount = false;
+    });
+
+    logoutButton.addEventListener("click", async () => {
+      logoutButton.disabled = true;
+      message.textContent = "Signing out...";
+
+      if (unsubscribeAccount) {
+        unsubscribeAccount();
+        unsubscribeAccount = null;
+      }
+
+      try {
+        await signOut(auth);
+        window.location.replace("login.html");
+      } catch (error) {
+        message.textContent = "Unable to log out. Please try again.";
+        logoutButton.disabled = false;
+      }
+    });
+  </script>
+
+</body>
+</html>

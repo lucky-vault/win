@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080909">
+  <meta name="description" content="Sign in to your Lucky Vault account.">
+
+  <title>Sign In | Lucky Vault</title>
+
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="js/app.js" defer></script>
+
+  <style>
+    .auth-page {
+      max-width: 480px;
+      margin: 65px auto 85px;
+      padding: 0 20px;
+    }
+    .auth-card {
+      padding: 30px;
+      background: linear-gradient(145deg, #171711, #0d0e0b);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      box-shadow: 0 20px 60px #0005;
+    }
+    .auth-heading {
+      text-align: center;
+      margin-bottom: 28px;
+    }
+    .auth-heading h1 {
+      font-size: 35px;
+      margin: 12px 0;
+    }
+    .auth-heading p, .auth-note {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.7;
+    }
+    .auth-card label {
+      display: block;
+      margin: 17px 0 8px;
+      font-size: 12px;
+      color: #e8dfcb;
+    }
+    .auth-card input {
+      width: 100%;
+      padding: 14px;
+      border: 1px solid #51442b;
+      border-radius: 8px;
+      background: #090a08;
+      color: var(--text);
+      outline: none;
+    }
+    .auth-card input:focus {
+      border-color: var(--gold);
+    }
+    .password-wrap {
+      display: flex;
+      gap: 8px;
+    }
+    .password-wrap input {
+      flex: 1;
+      min-width: 0;
+    }
+    .show-password {
+      background: #252116;
+      color: var(--gold-light);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 12px;
+      cursor: pointer;
+    }
+    .auth-card .button {
+      width: 100%;
+      margin-top: 24px;
+    }
+    .auth-card .button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    .forgot-password {
+      display: block;
+      text-align: right;
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--gold-light);
+      background: none;
+      border: none;
+      cursor: pointer;
+      width: 100%;
+    }
+    .auth-note {
+      margin-top: 18px;
+      text-align: center;
+    }
+    .auth-message {
+      min-height: 20px;
+      margin-top: 14px;
+      font-size: 12px;
+      text-align: center;
+      color: var(--gold-light);
+      line-height: 1.6;
+    }
+    .auth-switch {
+      text-align: center;
+      font-size: 12px;
+      margin-top: 23px;
+      color: var(--muted);
+    }
+    .auth-switch a {
+      color: var(--gold-light);
+    }
+    @media(max-width: 480px) {
+      .auth-card {
+        padding: 23px 18px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header class="site-header">
+  <a class="brand" href="index.html">
+    <span class="brand-mark">LV</span>
+    <span>LUCKY<span class="brand-light">VAULT</span></span>
+  </a>
+
+  <button class="menu-toggle" type="button"
+    aria-label="Toggle navigation"
+    aria-expanded="false"
+    aria-controls="main-navigation">☰</button>
+
+  <nav class="nav-links" id="main-navigation">
+    <a href="index.html">Home</a>
+    <a href="game.html">Experience</a>
+    <a href="rules.html">How it works</a>
+    <a href="responsible-play.html">Responsible play</a>
+  </nav>
+
+  <div class="nav-actions">
+    <a class="button button-small" href="register.html">Create account ↗</a>
+  </div>
+</header>
+
+<main class="auth-page">
+  <section class="auth-card">
+
+    <div class="auth-heading">
+      <div class="eyebrow">WELCOME BACK</div>
+      <h1>Sign in</h1>
+      <p>Continue exploring the Lucky Vault experience.</p>
+    </div>
+
+    <form id="login-form">
+
+      <label for="email">Email address</label>
+      <input id="email" type="email"
+        placeholder="you@example.com"
+        autocomplete="email" required>
+
+      <label for="password">Password</label>
+
+      <div class="password-wrap">
+        <input id="password" type="password"
+          placeholder="Enter your password"
+          autocomplete="current-password" required>
+
+        <button class="show-password" type="button"
+          id="toggle-password">Show</button>
+      </div>
+
+      <button class="forgot-password" type="button"
+        id="forgot-password">
+        Forgot your password?
+      </button>
+
+      <button class="button" id="login-button" type="submit">
+        Sign in →
+      </button>
+
+      <div class="auth-message" id="auth-message"
+        role="status" aria-live="polite"></div>
+
+    </form>
+
+    <p class="auth-note">
+      Account sign-in is connected to Firebase.
+      Real-money deposits, withdrawals and wagering are not enabled.
+    </p>
+
+    <div class="auth-switch">
+      New to Lucky Vault?
+      <a href="register.html">Create an account</a>
+    </div>
+
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="brand">
+    <span class="brand-mark">LV</span>
+    <span>LUCKY<span class="brand-light">VAULT</span></span>
+  </div>
+
+  <div class="footerlinks">
+    <a href="rules.html">Rules</a>
+    <a href="responsible-play.html">Responsible play</a>
+    <a href="privacy.html">Privacy</a>
+    <a href="terms.html">Terms</a>
+    <a href="support.html">Support</a>
+  </div>
+
+  <p>
+    © 2026 Lucky Vault. Account testing.
+    No real-money wagering, deposits, withdrawals or cash prizes.
+  </p>
+</footer>
+
+<script type="module">
+  import { auth, db } from "./js/firebase.js";
+
+  import {
+    signInWithEmailAndPassword,
+    sendEmailVerification,
+    sendPasswordResetEmail,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+
+  import {
+    doc,
+    getDoc
+  } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+  const ADMIN_UID = "X0enjFRIHuSkl9zntiZ9Z4jtyTn1";
+
+  const form = document.getElementById("login-form");
+  const emailInput = document.getElementById("email");
+  const passwordInput = document.getElementById("password");
+  const toggleButton = document.getElementById("toggle-password");
+  const forgotButton = document.getElementById("forgot-password");
+  const loginButton = document.getElementById("login-button");
+  const message = document.getElementById("auth-message");
+
+  toggleButton.addEventListener("click", () => {
+    const showing = passwordInput.type === "text";
+    passwordInput.type = showing ? "password" : "text";
+    toggleButton.textContent = showing ? "Show" : "Hide";
+  });
+
+  function friendlyError(error) {
+    switch (error.code) {
+      case "auth/invalid-email":
+        return "Please enter a valid email address.";
+      case "auth/invalid-credential":
+      case "auth/wrong-password":
+      case "auth/user-not-found":
+        return "Incorrect email or password.";
+      case "auth/user-disabled":
+        return "This account has been disabled.";
+      case "auth/too-many-requests":
+        return "Too many attempts. Please try again later.";
+      case "auth/network-request-failed":
+        return "Network error. Check your internet connection.";
+      default:
+        return "Sign-in failed. Please try again. " +
+          (error.code || "");
+    }
+  }
+
+  form.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (!form.reportValidity()) return;
+
+    loginButton.disabled = true;
+    loginButton.textContent = "Signing in...";
+    message.textContent = "Checking your account...";
+
+    try {
+      const credential = await signInWithEmailAndPassword(
+        auth,
+        emailInput.value.trim(),
+        passwordInput.value
+      );
+
+      const user = credential.user;
+
+      if (!user.emailVerified) {
+        await sendEmailVerification(user);
+        await signOut(auth);
+
+        message.textContent =
+          "Please verify your email first. A new verification email has been sent.";
+        return;
+      }
+
+      if (user.uid !== ADMIN_UID) {
+        const userRef = doc(db, "users", user.uid);
+        const userSnapshot = await getDoc(userRef);
+
+        if (!userSnapshot.exists()) {
+          await signOut(auth);
+          message.textContent =
+            "Your account profile could not be found. Please contact support.";
+          return;
+        }
+
+        const accountData = userSnapshot.data();
+
+        if (accountData.status === "suspended") {
+          await signOut(auth);
+          message.textContent =
+            "This account has been suspended. Please contact support.";
+          return;
+        }
+
+        if (accountData.role !== "user") {
+          await signOut(auth);
+          message.textContent =
+            "Your account permissions need to be checked. Contact support.";
+          return;
+        }
+      }
+
+      message.textContent = "Sign-in successful. Opening your account...";
+
+      window.location.href =
+        user.uid === ADMIN_UID ? "admin.html" : "dashboard.html";
+
+    } catch (error) {
+      console.error("Login error:", error);
+
+      if (error.code === "permission-denied") {
+        message.textContent =
+          "Unable to verify your account permissions. Please contact support.";
+      } else {
+        message.textContent = friendlyError(error);
+      }
+
+    } finally {
+      loginButton.disabled = false;
+      loginButton.textContent = "Sign in →";
+    }
+  });
+
+  forgotButton.addEventListener("click", async () => {
+    const email = emailInput.value.trim();
+
+    if (!email) {
+      message.textContent = "Enter your email address first.";
+      emailInput.focus();
+      return;
+    }
+
+    forgotButton.disabled = true;
+    message.textContent = "Sending password reset email...";
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+
+      message.textContent =
+        "If an account exists for that address, a password reset email will be sent.";
+
+    } catch (error) {
+      console.error("Password reset error:", error);
+
+      message.textContent =
+        "Unable to send reset email. Please check the address and try again.";
+
+    } finally {
+      forgotButton.disabled = false;
+    }
+  });
+</script>
+
+</body>
+</html>

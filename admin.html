@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#080909">
+  <title>Admin Panel | Lucky Vault</title>
+  <link rel="stylesheet" href="css/styles.css">
+
+  <style>
+    .admin-wrap {
+      width: min(1100px, 94%);
+      margin: 45px auto;
+    }
+
+    .admin-heading {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 15px;
+      margin-bottom: 25px;
+    }
+
+    .admin-heading h1 {
+      color: #d4af37;
+    }
+
+    .admin-card {
+      background: #151515;
+      border: 1px solid rgba(212,175,55,.3);
+      border-radius: 14px;
+      padding: 22px;
+      margin-bottom: 22px;
+    }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 15px;
+    }
+
+    .stat-number {
+      font-size: 32px;
+      color: #d4af37;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .admin-search {
+      width: 100%;
+      padding: 14px;
+      border-radius: 8px;
+      background: #090a08;
+      border: 1px solid #51442b;
+      color: white;
+      margin: 15px 0;
+    }
+
+    .player-item {
+      border-top: 1px solid #39342a;
+      padding: 17px 0;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .player-info {
+      overflow-wrap: anywhere;
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .player-info p {
+      color: #aaa;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+
+    .status-active {
+      color: #65d69a !important;
+    }
+
+    .status-suspended {
+      color: #ff7373 !important;
+    }
+
+    .status-pending {
+      color: #e7bd55 !important;
+    }
+
+    .admin-button {
+      padding: 10px 15px;
+      border-radius: 7px;
+      border: 1px solid #d4af37;
+      background: #d4af37;
+      color: #111;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .admin-button:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+
+    .logout-button {
+      background: transparent;
+      color: #d4af37;
+    }
+
+    .secondary-button {
+      background: transparent;
+      color: #d4af37;
+      margin-right: 8px;
+    }
+
+    #admin-message {
+      margin: 15px 0;
+      color: #d4af37;
+      line-height: 1.6;
+    }
+
+    .small-note {
+      color: #aaa;
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .player-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .empty-state {
+      padding: 20px 0;
+      color: #aaa;
+      text-align: center;
+    }
+
+    @media(max-width: 500px) {
+      .admin-card {
+        padding: 16px;
+      }
+
+      .player-item {
+        align-items: flex-start;
+      }
+
+      .player-actions {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header class="site-header">
+  <a class="brand" href="index.html">
+    <span class="brand-mark">LV</span>
+    <span>LUCKY<span class="brand-light">VAULT</span></span>
+  </a>
+</header>
+
+<main class="admin-wrap">
+
+  <div class="admin-heading">
+    <div>
+      <div class="eyebrow">LUCKY VAULT MANAGEMENT</div>
+      <h1>Administrator Panel</h1>
+      <p class="small-note">Private platform management area</p>
+    </div>
+
+    <div>
+      <button class="admin-button logout-button"
+        id="logout-button" type="button">
+        Log out
+      </button>
+    </div>
+  </div>
+
+  <p id="admin-message" role="status">
+    Verifying administrator access...
+  </p>
+
+  <div id="admin-content" hidden>
+
+    <section class="stat-grid">
+
+      <div class="admin-card">
+        <p class="small-note">Total registered players</p>
+        <div class="stat-number" id="total-players">0</div>
+      </div>
+
+      <div class="admin-card">
+        <p class="small-note">Active accounts</p>
+        <div class="stat-number" id="active-players">0</div>
+      </div>
+
+      <div class="admin-card">
+        <p class="small-note">Suspended accounts</p>
+        <div class="stat-number" id="suspended-players">0</div>
+      </div>
+
+    </section>
+
+    <section class="admin-card">
+
+      <div class="admin-heading">
+        <div>
+          <h2>Player Management</h2>
+          <p class="small-note">
+            View and manage registered player accounts.
+          </p>
+        </div>
+
+        <button class="admin-button secondary-button"
+          id="refresh-button" type="button">
+          Refresh Players
+        </button>
+      </div>
+
+      <input
+        class="admin-search"
+        id="player-search"
+        type="search"
+        placeholder="Search by name, email or UID..."
+        autocomplete="off">
+
+      <div id="player-list">
+        Loading players...
+      </div>
+
+    </section>
+
+    <section class="admin-card">
+      <h2>Platform Status</h2>
+
+      <p class="small-note">
+        Firebase authentication and player account management
+        are enabled.
+      </p>
+
+      <p class="small-note">
+        Real-money deposits, withdrawals and wagering remain
+        disabled pending the required secure backend,
+        licensing checks and technical approvals.
+      </p>
+    </section>
+
+  </div>
+
+</main>
+
+<script type="module">
+
+  import { auth, db } from "./js/firebase.js";
+
+  import {
+    onAuthStateChanged,
+    signOut
+  } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+
+  import {
+    collection,
+    getDocs,
+    doc,
+    updateDoc
+  } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+
+  const ADMIN_UID = "X0enjFRIHuSkl9zntiZ9Z4jtyTn1";
+
+  const message = document.getElementById("admin-message");
+  const content = document.getElementById("admin-content");
+  const playerList = document.getElementById("player-list");
+  const searchInput = document.getElementById("player-search");
+  const refreshButton = document.getElementById("refresh-button");
+
+  let players = [];
+  let isAdmin = false;
+  let loading = false;
+  const updatingPlayers = new Set();
+
+  function showMessage(text) {
+    message.textContent = text;
+  }
+
+  function makeElement(tag, className, text) {
+    const element = document.createElement(tag);
+
+    if (className) {
+      element.className = className;
+    }
+
+    if (text !== undefined) {
+      element.textContent = text;
+    }
+
+    return element;
+  }
+
+  function formatDate(timestamp) {
+    if (!timestamp || typeof timestamp.toDate !== "function") {
+      return "Date unavailable";
+    }
+
+    return timestamp.toDate().toLocaleString(undefined, {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  }
+
+  function updateStatistics() {
+
+    const suspended = players.filter(
+      player => player.status === "suspended"
+    ).length;
+
+    document.getElementById("total-players").textContent =
+      players.length;
+
+    document.getElementById("suspended-players").textContent =
+      suspended;
+
+    document.getElementById("active-players").textContent =
+      players.length - suspended;
+  }
+
+  function renderPlayers() {
+
+    const query = searchInput.value.trim().toLowerCase();
+
+    const filtered = players.filter(player => {
+
+      const name = (player.displayName || "").toLowerCase();
+      const email = (player.email || "").toLowerCase();
+      const uid = (player.uid || "").toLowerCase();
+
+      return (
+        name.includes(query) ||
+        email.includes(query) ||
+        uid.includes(query)
+      );
+
+    });
+
+    playerList.replaceChildren();
+
+    if (!filtered.length) {
+      playerList.append(
+        makeElement(
+          "div",
+          "empty-state",
+          "No matching players found."
+        )
+      );
+
+      return;
+    }
+
+    filtered.forEach(player => {
+
+      const item = makeElement("div", "player-item");
+      const info = makeElement("div", "player-info");
+
+      const status = player.status || "active";
+
+      info.append(
+        makeElement(
+          "strong",
+          "",
+          player.displayName || "Unnamed player"
+        ),
+
+        makeElement(
+          "p",
+          "",
+          "Email: " + (player.email || "Unavailable")
+        ),
+
+        makeElement(
+          "p",
+          "",
+          "UID: " + player.uid
+        ),
+
+        makeElement(
+          "p",
+          "",
+          "Joined: " + formatDate(player.createdAt)
+        )
+      );
+
+      const verification = player.emailVerified === true
+        ? "Email verified"
+        : "Email not verified or unavailable";
+
+      const verificationClass = player.emailVerified === true
+        ? "status-active"
+        : "status-pending";
+
+      info.append(
+        makeElement(
+          "p",
+          verificationClass,
+          verification
+        )
+      );
+
+      const statusClass = status === "suspended"
+        ? "status-suspended"
+        : "status-active";
+
+      info.append(
+        makeElement(
+          "p",
+          statusClass,
+          "Account status: " + status
+        )
+      );
+
+      const actions = makeElement("div", "player-actions");
+
+      const button = makeElement(
+        "button",
+        "admin-button",
+        status === "suspended" ? "Reactivate" : "Suspend"
+      );
+
+      button.type = "button";
+      button.disabled = updatingPlayers.has(player.uid);
+
+      button.addEventListener("click", () => {
+        changeStatus(player.uid, status, button);
+      });
+
+      actions.append(button);
+
+      item.append(info, actions);
+      playerList.append(item);
+
+    });
+
+  }
+
+  async function loadPlayers() {
+
+    if (!isAdmin || loading) return;
+
+    loading = true;
+    refreshButton.disabled = true;
+    refreshButton.textContent = "Loading...";
+
+    showMessage("Loading registered players...");
+
+    try {
+
+      const snapshot = await getDocs(collection(db, "users"));
+
+      players = snapshot.docs.map(item => ({
+        ...item.data(),
+        uid: item.id
+      }));
+
+      players.sort((a, b) => {
+        const dateA = a.createdAt?.toMillis?.() || 0;
+        const dateB = b.createdAt?.toMillis?.() || 0;
+        return dateB - dateA;
+      });
+
+      updateStatistics();
+      renderPlayers();
+
+      showMessage(
+        "Successfully loaded " + players.length + " player account(s)."
+      );
+
+    } catch (error) {
+
+      console.error("Player loading error:", error);
+
+      showMessage(
+        "Unable to load players. Check your internet connection and Firestore security rules."
+      );
+
+      playerList.textContent = "Player records could not be loaded.";
+
+    } finally {
+
+      loading = false;
+      refreshButton.disabled = false;
+      refreshButton.textContent = "Refresh Players";
+
+    }
+
+  }
+
+  async function changeStatus(uid, currentStatus, button) {
+
+    if (!isAdmin || updatingPlayers.has(uid)) return;
+
+    const newStatus = currentStatus === "suspended"
+      ? "active"
+      : "suspended";
+
+    const confirmed = window.confirm(
+      "Are you sure you want to " + newStatus +
+      " this player account?"
+    );
+
+    if (!confirmed) return;
+
+    updatingPlayers.add(uid);
+    button.disabled = true;
+    button.textContent = "Updating...";
+
+    try {
+
+      await updateDoc(doc(db, "users", uid), {
+        status: newStatus
+      });
+
+      players = players.map(player =>
+        player.uid === uid
+          ? { ...player, status: newStatus }
+          : player
+      );
+
+      updateStatistics();
+      renderPlayers();
+
+      showMessage(
+        "Player account successfully " + newStatus + "."
+      );
+
+    } catch (error) {
+
+      console.error("Account update error:", error);
+
+      showMessage(
+        "Unable to update this account. Check your administrator permissions."
+      );
+
+      button.disabled = false;
+      button.textContent =
+        currentStatus === "suspended" ? "Reactivate" : "Suspend";
+
+    } finally {
+
+      updatingPlayers.delete(uid);
+
+    }
+
+  }
+
+  searchInput.addEventListener("input", renderPlayers);
+
+  refreshButton.addEventListener("click", loadPlayers);
+
+  document.getElementById("logout-button").addEventListener(
+    "click",
+    async () => {
+
+      try {
+        await signOut(auth);
+        window.location.replace("login.html");
+      } catch (error) {
+        console.error("Logout error:", error);
+        showMessage("Logout failed. Please try again.");
+      }
+
+    }
+  );
+
+  onAuthStateChanged(auth, async user => {
+
+    if (!user) {
+      window.location.replace("login.html");
+      return;
+    }
+
+    if (user.uid !== ADMIN_UID) {
+
+      showMessage(
+        "Access denied. Administrator account required."
+      );
+
+      await signOut(auth);
+      window.location.replace("login.html");
+      return;
+
+    }
+
+    if (!user.emailVerified) {
+
+      showMessage(
+        "Verify your email before accessing administration."
+      );
+
+      await signOut(auth);
+      window.location.replace("login.html");
+      return;
+
+    }
+
+    isAdmin = true;
+    content.hidden = false;
+
+    await loadPlayers();
+
+  });
+
+</script>
+
+</body>
+</html>
