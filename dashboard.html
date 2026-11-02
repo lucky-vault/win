@@ -20,8 +20,14 @@
       margin: 24px 0;
     }
 
-    .account-card h2 { color: #d4af37; }
-    .account-detail { margin: 14px 0; overflow-wrap: anywhere; }
+    .account-card h2 {
+      color: #d4af37;
+    }
+
+    .account-detail {
+      margin: 14px 0;
+      overflow-wrap: anywhere;
+    }
 
     .dashboard-actions {
       display: flex;
@@ -47,7 +53,39 @@
       color: #d4af37;
     }
 
-    #dashboard-message { margin-top: 16px; }
+    #dashboard-message,
+    #wallet-message {
+      margin-top: 16px;
+      overflow-wrap: anywhere;
+    }
+
+    .wallet-balance {
+      color: #d4af37;
+      font-size: 30px;
+      font-weight: bold;
+      margin: 15px 0;
+    }
+
+    .sandbox-label {
+      display: inline-block;
+      padding: 6px 12px;
+      border: 1px solid #d4af37;
+      border-radius: 20px;
+      color: #d4af37;
+      font-size: 12px;
+      margin-bottom: 12px;
+    }
+
+    .wallet-note {
+      color: #bbb;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    button:disabled {
+      opacity: .6;
+      cursor: not-allowed;
+    }
   </style>
 </head>
 
@@ -66,9 +104,11 @@
   </header>
 
   <main class="dashboard-wrap">
+
     <h1>My Dashboard</h1>
     <p>Welcome to your Lucky Vault account.</p>
 
+    <!-- ACCOUNT INFORMATION -->
     <section class="account-card">
       <h2>Account Information</h2>
 
@@ -95,21 +135,69 @@
       <div class="dashboard-actions">
         <a href="game.html">Open Game</a>
         <a href="support.html">Contact Support</a>
-        <button id="logout-button" type="button">Log Out</button>
+        <button id="logout-button" type="button">
+          Log Out
+        </button>
       </div>
 
-      <p id="dashboard-message" role="status" aria-live="polite"></p>
+      <p id="dashboard-message" role="status" aria-live="polite">
+        Checking your account...
+      </p>
     </section>
 
+    <!-- WALLET -->
+    <section class="account-card">
+      <h2>My Wallet</h2>
+
+      <span class="sandbox-label">SANDBOX MODE</span>
+
+      <p class="wallet-note">
+        Your wallet is securely connected to your Lucky Vault account.
+      </p>
+
+      <p><strong>Available balance</strong></p>
+
+      <div class="wallet-balance" id="wallet-balance">
+        ₦0.00
+      </div>
+
+      <p>
+        <strong>Wallet status:</strong>
+        <span id="wallet-status">Waiting for account verification...</span>
+      </p>
+
+      <p>
+        <strong>Currency:</strong>
+        <span id="wallet-currency">NGN</span>
+      </p>
+
+      <p id="wallet-message" role="status" aria-live="polite">
+        Your wallet has not yet been connected.
+      </p>
+
+      <p class="wallet-note">
+        This is a test wallet. Real-money deposits, withdrawals and
+        wagering are not enabled.
+      </p>
+    </section>
+
+    <!-- GAMING STATUS -->
     <section class="account-card">
       <h2>Gaming Status</h2>
+
       <p>Lucky Vault account access is connected.</p>
+
       <p>Real-money gaming and financial transactions are not activated.</p>
-      <p>Never send money to an account claiming to be your Lucky Vault wallet.</p>
+
+      <p>
+        Never send money to an account claiming to be your Lucky Vault wallet.
+      </p>
     </section>
+
   </main>
 
   <script type="module">
+
     import { auth, db } from "./js/firebase.js";
 
     import {
@@ -122,23 +210,55 @@
       onSnapshot
     } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
+
+    // ADMIN ACCOUNT
     const ADMIN_UID = "X0enjFRIHuSkl9zntiZ9Z4jtyTn1";
 
+
+    // DASHBOARD ELEMENTS
     const userName = document.getElementById("user-name");
     const userEmail = document.getElementById("user-email");
-    const verificationStatus = document.getElementById("verification-status");
-    const accountStatus = document.getElementById("account-status");
-    const message = document.getElementById("dashboard-message");
-    const logoutButton = document.getElementById("logout-button");
 
+    const verificationStatus =
+      document.getElementById("verification-status");
+
+    const accountStatus =
+      document.getElementById("account-status");
+
+    const message =
+      document.getElementById("dashboard-message");
+
+    const logoutButton =
+      document.getElementById("logout-button");
+
+
+    // WALLET ELEMENTS
+    const walletBalance =
+      document.getElementById("wallet-balance");
+
+    const walletStatus =
+      document.getElementById("wallet-status");
+
+    const walletCurrency =
+      document.getElementById("wallet-currency");
+
+    const walletMessage =
+      document.getElementById("wallet-message");
+
+
+    // STATE
     let unsubscribeAccount = null;
-    let checkingAccount = false;
     let redirecting = false;
+    let walletStarted = false;
 
+
+    // LOGOUT AND REDIRECT
     async function forceLogout(reason) {
+
       if (redirecting) return;
 
       redirecting = true;
+
       message.textContent = reason;
 
       if (unsubscribeAccount) {
@@ -155,7 +275,91 @@
       window.location.replace("login.html");
     }
 
+
+    // CREATE OR CONNECT PLAYER WALLET
+    async function createWallet(user) {
+
+      if (walletStarted) return;
+
+      walletStarted = true;
+
+      walletStatus.textContent = "Connecting...";
+      walletMessage.textContent =
+        "Connecting to your secure sandbox wallet...";
+
+      try {
+
+        // Obtain Firebase authentication token
+        const token = await user.getIdToken();
+
+        // Contact secure Netlify server function
+        const response = await fetch(
+          "/.netlify/functions/create-wallet",
+          {
+            method: "POST",
+
+            headers: {
+              "Authorization": `Bearer ${token}`,
+              "Content-Type": "application/json"
+            }
+          }
+        );
+
+        const result = await response.json();
+
+        if (!response.ok || !result.success) {
+          throw new Error(
+            result.error || "Wallet connection failed."
+          );
+        }
+
+        // Display server-returned wallet balance
+        const balanceMinor =
+          result.wallet.balanceMinor;
+
+        if (
+          typeof balanceMinor !== "number" ||
+          !Number.isSafeInteger(balanceMinor) ||
+          balanceMinor < 0
+        ) {
+          throw new Error("Invalid wallet balance received.");
+        }
+
+        const balance = balanceMinor / 100;
+
+        walletBalance.textContent =
+          new Intl.NumberFormat("en-NG", {
+            style: "currency",
+            currency: result.wallet.currency
+          }).format(balance);
+
+        walletCurrency.textContent =
+          result.wallet.currency;
+
+        walletStatus.textContent =
+          "Active — Sandbox";
+
+        walletMessage.textContent = result.created
+          ? "Your sandbox wallet was created successfully."
+          : "Your existing sandbox wallet is connected.";
+
+      } catch (error) {
+
+        console.error("Wallet connection error:", error);
+
+        walletStatus.textContent = "Not connected";
+
+        walletMessage.textContent =
+          "Unable to connect your wallet. Please refresh and try again.";
+
+        walletStarted = false;
+      }
+    }
+
+
+    // AUTHENTICATION CHECK
     onAuthStateChanged(auth, async (user) => {
+
       if (unsubscribeAccount) {
         unsubscribeAccount();
         unsubscribeAccount = null;
@@ -166,75 +370,101 @@
         return;
       }
 
+      // ADMIN REDIRECT
       if (user.uid === ADMIN_UID) {
         window.location.replace("admin.html");
         return;
       }
 
+      // EMAIL VERIFICATION
       if (!user.emailVerified) {
+
         await forceLogout(
           "Please verify your email before accessing your dashboard."
         );
+
         return;
       }
 
-      if (checkingAccount) return;
-      checkingAccount = true;
+      // DISPLAY USER INFORMATION
+      userName.textContent =
+        user.displayName || "Lucky Vault Member";
 
-      userName.textContent = user.displayName || "Lucky Vault Member";
-      userEmail.textContent = user.email || "No email available";
+      userEmail.textContent =
+        user.email || "No email available";
+
       verificationStatus.textContent = "Verified";
+
       accountStatus.textContent = "Checking...";
 
+
+      // CHECK FIRESTORE ACCOUNT
       const userRef = doc(db, "users", user.uid);
 
       unsubscribeAccount = onSnapshot(
         userRef,
 
         async (snapshot) => {
+
           if (!snapshot.exists()) {
+
             await forceLogout(
               "Your account record could not be found. Please contact support."
             );
+
             return;
           }
 
           const data = snapshot.data();
 
           if (data.role !== "user") {
+
             await forceLogout(
               "Your account does not have player access."
             );
+
             return;
           }
 
           if (data.status === "suspended") {
+
             accountStatus.textContent = "Suspended";
 
             await forceLogout(
               "Your account has been suspended. Please contact support."
             );
+
             return;
           }
 
           accountStatus.textContent = "Active";
-          message.textContent = "Your account is active.";
+
+          message.textContent =
+            "Your account is active.";
+
+          // Connect wallet only after account checks pass
+          createWallet(user);
         },
 
         async (error) => {
+
           console.error("Account status error:", error);
 
           await forceLogout(
             "Unable to verify your account status. Please try again later."
           );
+
         }
       );
 
-      checkingAccount = false;
     });
 
+
+    // LOGOUT BUTTON
     logoutButton.addEventListener("click", async () => {
+
       logoutButton.disabled = true;
+
       message.textContent = "Signing out...";
 
       if (unsubscribeAccount) {
@@ -243,13 +473,23 @@
       }
 
       try {
+
         await signOut(auth);
+
         window.location.replace("login.html");
+
       } catch (error) {
-        message.textContent = "Unable to log out. Please try again.";
+
+        console.error("Logout error:", error);
+
+        message.textContent =
+          "Unable to log out. Please try again.";
+
         logoutButton.disabled = false;
       }
+
     });
+
   </script>
 
 </body>
